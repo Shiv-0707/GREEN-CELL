@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive Battery Voltage Analysis Dashboard for NueGo Electric Bus Fleet - Greencell Mobility Internship Assignment">
+    <title>NueGo Battery Voltage Dashboard — Greencell Mobility</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Hero Header -->
+    <header class="hero" id="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="hero-badge">⚡ NueGo E-Mobility</div>
+            <h1>Battery Voltage Analysis</h1>
+            <p class="hero-sub">Interactive data visualization dashboard for Greencell's electric bus fleet</p>
+        </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar" id="stats-bar">
+        <div class="stat-card" id="stat-records">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="val-records">—</div>
+            <div class="stat-label">Data Points</div>
+        </div>
+        <div class="stat-card" id="stat-range">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="val-range">—</div>
+            <div class="stat-label">Date Range</div>
+        </div>
+        <div class="stat-card" id="stat-mean">
+            <div class="stat-icon">📈</div>
+            <div class="stat-value" id="val-mean">—</div>
+            <div class="stat-label">Mean Voltage</div>
+        </div>
+        <div class="stat-card" id="stat-min">
+            <div class="stat-icon">🔋</div>
+            <div class="stat-value" id="val-min">—</div>
+            <div class="stat-label">Min Voltage</div>
+        </div>
+        <div class="stat-card" id="stat-max">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-value" id="val-max">—</div>
+            <div class="stat-label">Max Voltage</div>
+        </div>
+        <div class="stat-card" id="stat-std">
+            <div class="stat-icon">📉</div>
+            <div class="stat-value" id="val-std">—</div>
+            <div class="stat-label">Std Deviation</div>
+        </div>
+    </section>
+
+    <!-- Chart 1: Voltage Over Time -->
+    <section class="chart-section" id="chart-voltage-section">
+        <div class="section-header">
+            <h2>Voltage Over Time</h2>
+            <p>Battery voltage (%) plotted against timestamp with cubic trendline</p>
+        </div>
+        <div class="chart-container">
+            <div id="chart-voltage" class="plotly-chart"></div>
+            <div class="chart-controls">
+                <span class="zoom-hint">🔍 Drag axes to stretch • Scroll to zoom • Drag chart to pan • Double-click to reset</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chart 2: Moving Average -->
+    <section class="chart-section" id="chart-ma-section">
+        <div class="section-header">
+            <h2>5-Day Moving Average</h2>
+            <p>Smoothed voltage trend highlighting long-term charge/discharge patterns</p>
+        </div>
+        <div class="chart-container">
+            <div id="chart-ma" class="plotly-chart"></div>
+            <div class="chart-controls">
+                <span class="zoom-hint">🔍 Drag axes to stretch • Scroll to zoom • Drag chart to pan • Double-click to reset</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chart 3: Peaks & Lows -->
+    <section class="chart-section" id="chart-peaks-section">
+        <div class="section-header">
+            <h2>Local Peaks & Lows</h2>
+            <p>Detected turning points using scipy signal processing (prominence ≥ 5%)</p>
+        </div>
+        <div class="chart-container">
+            <div id="chart-peaks" class="plotly-chart"></div>
+            <div class="chart-controls">
+                <span class="zoom-hint">🔍 Drag axes to stretch • Scroll to zoom • Drag chart to pan • Double-click to reset</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tables Section -->
+    <section class="tables-section" id="tables-section">
+        <div class="table-group">
+            <div class="section-header">
+                <h2>🔺 Local Peaks</h2>
+                <p>Timestamps where voltage reached a local maximum</p>
+            </div>
+            <div class="table-wrap">
+                <table id="table-peaks">
+                    <thead>
+                        <tr><th>#</th><th>Timestamp</th><th>Voltage (%)</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="table-group">
+            <div class="section-header">
+                <h2>🔻 Local Lows</h2>
+                <p>Timestamps where voltage reached a local minimum</p>
+            </div>
+            <div class="table-wrap">
+                <table id="table-lows">
+                    <thead>
+                        <tr><th>#</th><th>Timestamp</th><th>Voltage (%)</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Below 20 Section -->
+    <section class="alert-section" id="below20-section">
+        <div class="section-header">
+            <h2>⚠️ Voltage Below 20%</h2>
+            <p>Instances where the battery voltage dropped below the critical 20% threshold</p>
+        </div>
+        <div class="alert-card" id="below20-card">
+            <div class="alert-icon">✅</div>
+            <div class="alert-text">
+                <strong>No Critical Events</strong>
+                <p>The voltage never dropped below 20%. The minimum recorded voltage was <span id="below20-min">—</span>%.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slope Acceleration Section -->
+    <section class="chart-section" id="slope-section">
+        <div class="section-header">
+            <h2>🔽 Downward Slope Acceleration (Bonus)</h2>
+            <p>Episodes where the discharge rate increased — indicating accelerating power drain</p>
+        </div>
+        <div id="slope-content"></div>
+    </section>
+
+    <!-- Data Interpretation -->
+    <section class="interpretation-section" id="interpretation-section">
+        <div class="section-header">
+            <h2>📝 Data Interpretation</h2>
+            <p>Key insights from the battery voltage analysis</p>
+        </div>
+        <div class="insights-grid" id="insights-grid">
+            <div class="insight-card">
+                <div class="insight-num">1</div>
+                <p>The battery voltage data exhibits clear cyclical charge-discharge patterns typical of electric bus operations, with the voltage repeatedly rising to 100% (full charge) and declining to approximately 25–30% before recharging, indicating consistent daily operational cycles.</p>
+            </div>
+            <div class="insight-card">
+                <div class="insight-num">2</div>
+                <p>The discharge curves show a non-linear pattern where voltage drops more steeply in the mid-range (60–40%) compared to the upper range (100–80%), which is characteristic of lithium-ion battery discharge behavior and suggests the batteries are performing within expected electrochemical norms.</p>
+            </div>
+            <div class="insight-card">
+                <div class="insight-num">3</div>
+                <p>A slight overall downward trend is observable across the 8-day period, with the 5-day moving average showing a gradual decline, which could indicate minor degradation effects, ambient temperature variations, or changing route demands on the fleet.</p>
+            </div>
+            <div class="insight-card">
+                <div class="insight-num">4</div>
+                <p>The local peaks consistently reach 100% and the lows cluster around 25–30%, suggesting disciplined charging practices — the buses are being fully charged and the fleet management system appears to trigger recharging before the battery drops to dangerously low levels.</p>
+            </div>
+            <div class="insight-card">
+                <div class="insight-num">5</div>
+                <p>Several episodes of accelerating discharge (where the rate of voltage drop increases) are detectable during the mid-range voltage zones, likely corresponding to periods of heavy demand such as hill climbing, air conditioning usage, or high passenger loads during peak hours.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <p>Greencell NueGo — Battery Voltage Analysis Dashboard</p>
+        <p class="footer-sub">Internship Assignment • Data Visualization & Interpretation</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
