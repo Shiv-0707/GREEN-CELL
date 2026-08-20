@@ -165,6 +165,9 @@ The inverted signal is used to detect local lows.
 
 The detected peak values repeatedly reach or approach full charge, while the detected lows extend down to **25%**.
 
+<img width="1393" height="613" alt="image" src="https://github.com/user-attachments/assets/dd6881af-6466-4790-99fc-3cb2811cdbf1" />
+
+
 ---
 
 ### 4. Critical Low-Voltage Detection
